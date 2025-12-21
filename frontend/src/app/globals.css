@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Outfit', sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Outfit', sans-serif;
+  @apply antialiased;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+  }
+  .glass-dark {
+    @apply bg-black/60 backdrop-blur-md border border-white/10 shadow-lg;
+  }
+}
+
+@media print {
+  nav, button, .no-print {
+    display: none !important;
+  }
+  body, .min-h-screen {
+    background: white !important;
+    padding: 0 !important;
+  }
+  table {
+    width: 100% !important;
+    border: 1px solid #000 !important;
+  }
+  th, td {
+    border: 1px solid #ddd !important;
+  }
+}
+
