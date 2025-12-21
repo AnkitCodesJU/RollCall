@@ -2,6 +2,10 @@
 
 RollCall is a modern, full-stack attendance management application built with the MERN stack (MongoDB, Express, React/Next.js, Node.js). It is designed to streamline the process of tracking and managing attendance.
 
+## 🚀 Live Demo
+
+[**https://roll-call-mu.vercel.app/**](https://roll-call-mu.vercel.app/)
+
 ## Technology Stack
 
 -   **Frontend**: Next.js (React), Tailwind CSS
