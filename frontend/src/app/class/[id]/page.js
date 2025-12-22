@@ -16,6 +16,7 @@ export default function ClassPage() {
   const [newColumnType, setNewColumnType] = useState('attendance');
   const [newColumnAccess, setNewColumnAccess] = useState('public');
   const [showAddColumn, setShowAddColumn] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   
   // Undo State
   const [history, setHistory] = useState([]);
@@ -124,8 +125,8 @@ export default function ClassPage() {
     }
   };
 
-  const handleDownloadCSV = () => {
-    const includePrivate = isTeacher ? confirm('Include Private columns in export?') : false;
+  const confirmDownloadCSV = (includePrivate) => {
+    setShowExportModal(false);
     const colsToExport = includePrivate ? classData.columns : classData.columns.filter(c => c.access === 'public');
     const headers = ['Student Name', 'Stats', ...colsToExport.map(c => `${c.name} (${new Date(c.date).toLocaleDateString()})`)];
     
@@ -143,6 +144,10 @@ export default function ClassPage() {
     a.href = url;
     a.download = `${classData.name}_Report.csv`;
     a.click();
+  };
+
+  const handleDownloadCSV = () => {
+    setShowExportModal(true);
   };
 
   const handleCellChange = async (studentId, columnId, value) => {
@@ -509,6 +514,41 @@ export default function ClassPage() {
             </div>
           </div>
         )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm scale-100 transition-all border border-gray-100 dark:border-gray-700">
+             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
+               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+             </div>
+             <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Export to CSV</h2>
+             <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">Do you want to include private columns (hidden from students) in this export?</p>
+             
+             <div className="flex flex-col gap-3">
+               <button 
+                 onClick={() => confirmDownloadCSV(true)}
+                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+               >
+                 Include Private Data
+                 <span className="bg-blue-500 px-2 py-0.5 rounded text-xs">Recommended</span>
+               </button>
+               <button 
+                 onClick={() => confirmDownloadCSV(false)}
+                 className="w-full py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-xl transition-colors"
+               >
+                 Public Data Only
+               </button>
+             </div>
+             <button 
+               onClick={() => setShowExportModal(false)}
+               className="mt-4 w-full text-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm font-medium"
+             >
+               Cancel
+             </button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
