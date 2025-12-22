@@ -61,6 +61,16 @@ const getClassById = async (req, res) => {
     .populate('joinRequests.student', 'name email studentId');
 
   if (classItem) {
+    // Security Check: If not teacher, filter sensitive data
+    if (classItem.teacher._id.toString() !== req.user._id.toString()) {
+      // 1. Hide Join Requests from students
+      classItem.joinRequests = undefined;
+
+      // 2. Filter Private Columns
+      if (classItem.columns) {
+        classItem.columns = classItem.columns.filter(col => col.access !== 'private');
+      }
+    }
     res.json(classItem);
   } else {
     res.status(404).json({ message: 'Class not found' });
