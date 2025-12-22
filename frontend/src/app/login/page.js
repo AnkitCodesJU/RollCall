@@ -15,6 +15,7 @@ export default function LoginPage() {
     try {
       const { data } = await API.post('/users/login', { email, password });
       localStorage.setItem('user', JSON.stringify(data));
+      window.dispatchEvent(new Event('auth-change'));
       router.push('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');

@@ -18,6 +18,17 @@
   --font-sans: 'Outfit', sans-serif;
 }
 
+@media print {
+  :root {
+    --background: #ffffff !important;
+    --foreground: #000000 !important;
+  }
+  .dark {
+    --background: #ffffff !important;
+    --foreground: #000000 !important;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -62,10 +73,43 @@ body {
     font-size: 10px !important; /* Smaller font for print */
   }
   
+  /* NUCLEAR OPTION: Force everything to Black & White */
+  * {
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Restore borders and specific styling for tables */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
   th, td {
-    border: 1px solid #ddd !important;
+    border: 1px solid #000000 !important;
     padding: 4px !important;
     white-space: nowrap !important;
+    background-color: #ffffff !important; 
+    color: #000000 !important;
+  }
+  
+  /* Double check border collapse prevents double borders or invisible ones */
+  tr {
+    border: 1px solid #000000 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure text visibility */
+  span, p, h1, h2, h3, h4, div {
+    color: #000000 !important;
   }
 
   /* Hide sticky headers/cols logic for print */

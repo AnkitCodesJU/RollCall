@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createClass, getClasses, getClassById, enrollStudent, joinClass, approveRequest, declineRequest, getMatrix, addColumn, updateCell, archiveClass, removeStudent, deleteColumn } = require('../controllers/classController');
+const { createClass, getClasses, getClassById, enrollStudent, joinClass, approveRequest, declineRequest, getMatrix, addColumn, updateCell, archiveClass, unarchiveClass, removeStudent, deleteColumn, leaveClass } = require('../controllers/classController');
 const { protect, teacher } = require('../middlewares/authMiddleware');
 
 router.route('/')
@@ -34,10 +34,16 @@ router.route('/:id/matrix')
 router.route('/:id/archive')
   .put(protect, teacher, archiveClass);
 
+router.route('/:id/unarchive')
+  .put(protect, teacher, unarchiveClass);
+
 router.route('/:id/remove')
   .put(protect, teacher, removeStudent);
 
 router.route('/:id/columns/:columnId')
   .delete(protect, teacher, deleteColumn);
+
+router.route('/:id/leave')
+  .put(protect, leaveClass);
 
 module.exports = router;

@@ -39,14 +39,14 @@ const getClasses = async (req, res) => {
   // If student, return enrolled classes. If teacher, return taught classes. If admin, return all.
   let query = {};
   if (req.user.role === 'student') {
-    query = { students: req.user._id };
+    query = { "students.student": req.user._id };
   } else if (req.user.role === 'teacher') {
     query = { teacher: req.user._id };
   }
 
   const classes = await Class.find(query)
     .populate('teacher', 'name email')
-    .populate('students', 'name email studentId');
+    .populate('students.student', 'name email studentId');
   
   res.json(classes);
 };
@@ -57,7 +57,8 @@ const getClasses = async (req, res) => {
 const getClassById = async (req, res) => {
   const classItem = await Class.findById(req.params.id)
     .populate('teacher', 'name email')
-    .populate('students', 'name email studentId');
+    .populate('students.student', 'name email studentId')
+    .populate('joinRequests.student', 'name email studentId');
 
   if (classItem) {
     res.json(classItem);
@@ -96,7 +97,7 @@ const enrollStudent = async (req, res) => {
 // @route   POST /api/classes/join
 // @access  Private/Student
 const joinClass = async (req, res) => {
-  const { code } = req.body;
+  const { code, rollNumber } = req.body;
   const studentId = req.user._id;
 
   const classItem = await Class.findOne({ code });
@@ -105,15 +106,29 @@ const joinClass = async (req, res) => {
     return res.status(404).json({ message: 'Class not found' });
   }
 
-  if (classItem.students.includes(studentId)) {
+  // Check enrollment (students is now array of objects)
+  // Handle legacy data where students might be array of IDs
+  if (classItem.students.some(s => {
+    const id = s.student ? s.student.toString() : s.toString();
+    return id === studentId;
+  })) {
     return res.status(400).json({ message: 'Already enrolled' });
   }
 
-  if (classItem.joinRequests.includes(studentId)) {
+  // Check pending requests
+  if (classItem.joinRequests.some(r => {
+     const id = r.student ? r.student.toString() : r.toString();
+     return id === studentId;
+  })) {
     return res.status(400).json({ message: 'Request already pending' });
   }
+  
+  // Validate Roll Number
+  if (!rollNumber) {
+     return res.status(400).json({ message: 'Roll Number is required' });
+  }
 
-  classItem.joinRequests.push(studentId);
+  classItem.joinRequests.push({ student: studentId, rollNumber });
   await classItem.save();
 
   res.json({ message: 'Join request sent successfully' });
@@ -133,13 +148,18 @@ const approveRequest = async (req, res) => {
     return res.status(401).json({ message: 'Not authorized' });
   }
 
-  if (!classItem.joinRequests.includes(studentId)) {
+  // Find the request object to get the roll number
+  const requestObj = classItem.joinRequests.find(req => req.student.toString() === studentId);
+
+  if (!requestObj) {
     return res.status(400).json({ message: 'Request not found' });
   }
 
   // Move to students
-  classItem.joinRequests = classItem.joinRequests.filter(id => id.toString() !== studentId);
-  classItem.students.push(studentId);
+  classItem.joinRequests = classItem.joinRequests.filter(req => req.student.toString() !== studentId);
+  
+  // Push the full object { student, rollNumber }
+  classItem.students.push(requestObj);
   
   // Backfill Logic
   // For every existing column, create a record for this student with default value
@@ -184,7 +204,7 @@ const declineRequest = async (req, res) => {
     return res.status(401).json({ message: 'Not authorized' });
   }
 
-  classItem.joinRequests = classItem.joinRequests.filter(id => id.toString() !== studentId);
+  classItem.joinRequests = classItem.joinRequests.filter(req => req.student.toString() !== studentId);
   await classItem.save();
 
   res.json({ message: 'Request declined' });
@@ -232,7 +252,9 @@ const addColumn = async (req, res) => {
   if (type === 'marks') defaultValue = 0;
   if (type === 'remarks') defaultValue = '-';
 
-  const recordPromises = classItem.students.map(studentId => {
+  const recordPromises = classItem.students.map(s => {
+    // Handle both new object structure and legacy IDs
+    const studentId = s.student ? s.student : s;
     return ClassRecord.create({
       classId: classItem._id,
       studentId: studentId,
@@ -319,6 +341,24 @@ const archiveClass = async (req, res) => {
   res.json({ message: 'Class archived' });
 };
 
+// @desc    Unarchive a class
+// @route   PUT /api/classes/:id/unarchive
+// @access  Private/Teacher
+const unarchiveClass = async (req, res) => {
+  const classItem = await Class.findById(req.params.id);
+
+  if (!classItem) return res.status(404).json({ message: 'Class not found' });
+  
+  if (classItem.teacher.toString() !== req.user._id.toString()) {
+    return res.status(401).json({ message: 'Not authorized' });
+  }
+
+  classItem.isArchived = false;
+  await classItem.save();
+
+  res.json({ message: 'Class unarchived' });
+};
+
 // @desc    Remove student from class
 // @route   PUT /api/classes/:id/remove
 // @access  Private/Teacher
@@ -332,11 +372,22 @@ const removeStudent = async (req, res) => {
     return res.status(401).json({ message: 'Not authorized' });
   }
 
-  classItem.students = classItem.students.filter(id => id.toString() !== studentId);
+  classItem.students = classItem.students.filter(s => {
+     const id = s.student ? s.student.toString() : s.toString();
+     return id !== studentId;
+  });
   await classItem.save();
   
   // Optionally delete their records?
   await ClassRecord.deleteMany({ classId: classItem._id, studentId });
+
+  // Notify Student
+  await Notification.create({
+    user: studentId,
+    message: `You have been removed from class ${classItem.name}`,
+    type: 'error',
+    link: '#'
+  });
 
   res.json({ message: 'Student removed' });
 };
@@ -364,4 +415,46 @@ const deleteColumn = async (req, res) => {
   res.json({ message: 'Column deleted' });
 };
 
-module.exports = { createClass, getClasses, getClassById, enrollStudent, joinClass, approveRequest, declineRequest, getMatrix, addColumn, updateCell, archiveClass, removeStudent, deleteColumn };
+// @desc    Student leaves a class
+// @route   PUT /api/classes/:id/leave
+// @access  Private/Student
+const leaveClass = async (req, res) => {
+  const classItem = await Class.findById(req.params.id);
+
+  if (!classItem) return res.status(404).json({ message: 'Class not found' });
+  
+  const studentId = req.user._id.toString();
+
+  // Check if enrolled
+  const isEnrolled = classItem.students.some(s => {
+     const id = s.student ? s.student.toString() : s.toString();
+     return id === studentId;
+  });
+
+  if (!isEnrolled) {
+     return res.status(400).json({ message: 'Not enrolled in this class' });
+  }
+
+  // Remove from students
+  classItem.students = classItem.students.filter(s => {
+     const id = s.student ? s.student.toString() : s.toString();
+     return id !== studentId;
+  });
+  
+  await classItem.save();
+  
+  // Clean up records
+  await ClassRecord.deleteMany({ classId: classItem._id, studentId });
+
+  // Notify Teacher
+  await Notification.create({
+    user: classItem.teacher,
+    message: `Student ${req.user.name} has left class ${classItem.name}`,
+    type: 'info',
+    link: `/class/${classItem._id}`
+  });
+
+  res.json({ message: 'You have left the class' });
+};
+
+module.exports = { createClass, getClasses, getClassById, enrollStudent, joinClass, approveRequest, declineRequest, getMatrix, addColumn, updateCell, archiveClass, unarchiveClass, removeStudent, deleteColumn, leaveClass };

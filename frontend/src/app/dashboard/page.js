@@ -10,7 +10,9 @@ export default function Dashboard() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [joinCode, setJoinCode] = useState('');
+  const [rollNumber, setRollNumber] = useState('');
   const [user, setUser] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user'));
@@ -42,9 +44,11 @@ export default function Dashboard() {
   const handleJoinClass = async (e) => {
     e.preventDefault();
     try {
-      await API.post('/classes/join', { code: joinCode });
+      if (!rollNumber) return alert('Please enter your Roll Number');
+      await API.post('/classes/join', { code: joinCode, rollNumber: rollNumber });
       setShowJoinModal(false);
       setJoinCode('');
+      setRollNumber('');
       alert('Join request sent! Wait for approval.');
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to join class');
@@ -83,9 +87,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Class Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {classes.map((cls) => (
+        {/* Active Classes Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          {classes.filter(c => !c.isArchived).map((cls) => (
             <Link href={`/class/${cls._id}`} key={cls._id} className="group">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden relative h-full">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-500 transform origin-left md:group-hover:scale-x-100 transition-transform duration-500 md:scale-x-0"></div>
@@ -100,7 +104,7 @@ export default function Dashboard() {
                    </div>
                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">{cls.name}</h2>
                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-                     {user.role === 'teacher' ? `${cls.students.length} Students Enrolled` : `Teacher: ${cls.teacher.name}`}
+                     {user.role === 'teacher' ? `` : `Teacher: ${cls.teacher.name}`}
                    </p>
                    <div className="flex items-center text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
                      View Classroom &rarr;
@@ -109,12 +113,51 @@ export default function Dashboard() {
               </div>
             </Link>
           ))}
-          {classes.length === 0 && (
+          {classes.filter(c => !c.isArchived).length === 0 && (
             <div className="col-span-full text-center py-20 bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
-               <p className="text-gray-400 text-lg">No classes found. Start by creating or joining one.</p>
+               <p className="text-gray-400 text-lg">No active classes found. Start by creating or joining one.</p>
             </div>
           )}
         </div>
+
+        {/* Archived Folder */}
+        {classes.some(c => c.isArchived) && (
+          <div className="mb-12">
+            <button 
+              onClick={() => setShowArchived(!showArchived)}
+              className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 font-medium mb-6 transition-colors"
+            >
+              <svg className={`w-5 h-5 transition-transform ${showArchived ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <span>Archived Classes ({classes.filter(c => c.isArchived).length})</span>
+            </button>
+            
+            {showArchived && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* LIFO Sorting: reverse() iterates in reverse, but better to slice().reverse() to avoid mutation or sort by needed field */}
+                {[...classes.filter(c => c.isArchived)].reverse().map((cls) => (
+                  <Link href={`/class/${cls._id}`} key={cls._id} className="group opacity-75 hover:opacity-100 transition-opacity">
+                    <div className="bg-gray-100 dark:bg-gray-800/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden relative h-full grayscale hover:grayscale-0">
+                      <div className="p-8">
+                         <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 bg-gray-200 dark:bg-gray-700 text-gray-500 rounded-lg">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                            </div>
+                            <span className="bg-gray-200 dark:bg-gray-700 text-gray-500 text-xs px-2 py-1 rounded-full font-mono tracking-wider">
+                              ARCHIVED
+                            </span>
+                         </div>
+                         <h2 className="text-xl font-bold text-gray-600 dark:text-gray-400 mb-2">{cls.name}</h2>
+                         <p className="text-gray-400 text-sm mb-6">
+                           {user.role === 'teacher' ? `` : `Teacher: ${cls.teacher.name}`}
+                         </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+            )}
+          </div>
+        )}
 
         {/* Create Modal */}
         {showCreateModal && (
@@ -153,6 +196,14 @@ export default function Dashboard() {
                   onChange={(e) => setJoinCode(e.target.value)}
                   placeholder="Class Code"
                   className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl mb-6 bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition-all uppercase tracking-widest font-mono text-center text-lg"
+                  required
+                />
+                <input
+                  type="number"
+                  value={rollNumber}
+                  onChange={(e) => setRollNumber(e.target.value)}
+                  placeholder="Roll Number"
+                  className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl mb-6 bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition-all font-mono text-lg"
                   required
                 />
                 <div className="flex justify-end space-x-3">

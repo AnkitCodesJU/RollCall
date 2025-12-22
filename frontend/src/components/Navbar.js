@@ -22,6 +22,7 @@ export default function Navbar() {
     
     checkUser();
     window.addEventListener('storage', checkUser);
+    window.addEventListener('auth-change', checkUser);
 
     // Dark Mode Check
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -32,7 +33,10 @@ export default function Navbar() {
       document.documentElement.classList.remove('dark');
     }
 
-    return () => window.removeEventListener('storage', checkUser);
+    return () => {
+      window.removeEventListener('storage', checkUser);
+      window.removeEventListener('auth-change', checkUser);
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -50,16 +54,17 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
+    window.dispatchEvent(new Event('auth-change'));
     router.push('/login');
   };
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300 print:hidden">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300 print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
-              R
+            <div className="w-10 h-10 relative">
+              <img src="/logo.png" alt="RollCall Logo" className="w-full h-full object-contain" />
             </div>
             <Link href={user ? "/dashboard" : "/"} className="flex-shrink-0 flex items-center">
               <span className="font-bold text-xl bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">

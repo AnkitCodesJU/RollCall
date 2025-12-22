@@ -4,8 +4,14 @@ const ClassSchema = new mongoose.Schema({
   name: { type: String, required: true },
   code: { type: String, required: true, unique: true },
   teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  joinRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  students: [{ 
+    student: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    rollNumber: { type: String } 
+  }],
+  joinRequests: [{ 
+    student: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    rollNumber: { type: String }
+  }],
   isArchived: { type: Boolean, default: false },
   columns: [{
     name: String,
