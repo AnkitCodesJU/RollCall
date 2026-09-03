@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import API from '@/utils/api';
+import { useAuth } from '@/utils/AuthContext';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -9,13 +9,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await API.post('/users/login', { email, password });
-      localStorage.setItem('user', JSON.stringify(data));
-      window.dispatchEvent(new Event('auth-change'));
+      await login(email, password);
       router.push('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
@@ -28,9 +27,7 @@ export default function LoginPage() {
       <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-white/50 dark:border-gray-700/50">
           <div className="mb-6 text-center">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Welcome Back
-            </h2>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white transition-colors duration-300">Welcome Back</h2>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Sign in to your RollCall account</p>
           </div>
           

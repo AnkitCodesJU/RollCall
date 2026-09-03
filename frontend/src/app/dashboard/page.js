@@ -3,22 +3,26 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import API from '@/utils/api';
 import Link from 'next/link';
+import { useAuth } from '@/utils/AuthContext';
 
 export default function Dashboard() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [classes, setClasses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [rollNumber, setRollNumber] = useState('');
-  const [user, setUser] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user'));
-    setUser(userData);
-    fetchClasses();
-  }, []);
+    if (!authLoading && !user) {
+      router.push('/login');
+    } else if (user) {
+      fetchClasses();
+    }
+  }, [authLoading, user]);
 
   const fetchClasses = async () => {
     try {
@@ -55,7 +59,7 @@ export default function Dashboard() {
     }
   };
 
-  if (!user) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">Loading...</div>;
+  if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 px-4 sm:px-6 lg:px-8 transition-colors duration-300">

@@ -1,20 +1,24 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import API from '@/utils/api';
+import { useAuth } from '@/utils/AuthContext';
 
 export default function ClassDetails() {
   const { id } = useParams();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [classData, setClassData] = useState(null);
-  const [attendanceHistory, setAttendanceHistory] = useState([]);
-  const [user, setUser] = useState(null);
+  const [matrixData, setMatrixData] = useState([]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) setUser(JSON.parse(storedUser));
-    fetchClassData();
-    fetchAttendance();
-  }, [id]);
+    if (!authLoading && !user) {
+      router.push('/login');
+    } else if (user) {
+      fetchClassData();
+      fetchMatrix();
+    }
+  }, [id, user, authLoading]);
 
   const fetchClassData = async () => {
     try {
@@ -25,12 +29,12 @@ export default function ClassDetails() {
     }
   };
 
-  const fetchAttendance = async () => {
+  const fetchMatrix = async () => {
     try {
-      const { data } = await API.get(`/attendance/${id}`);
-      setAttendanceHistory(data);
+      const { data } = await API.get(`/classes/${id}/matrix`);
+      setMatrixData(data);
     } catch (error) {
-      console.error('Failed to fetch attendance', error);
+      console.error('Failed to fetch matrix records', error);
     }
   };
 
@@ -45,6 +49,7 @@ export default function ClassDetails() {
     }
   };
 
+  if (authLoading || !user) return <div className="p-8">Loading...</div>;
   if (!classData) return <div className="p-8">Loading...</div>;
 
   return (
@@ -66,44 +71,48 @@ export default function ClassDetails() {
           )}
         </div>
 
-        <h3 className="text-xl font-bold mb-4 text-gray-800">Attendance History</h3>
+        <h3 className="text-xl font-bold mb-4 text-gray-800">Your Records</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border">
             <thead>
-              <tr>
-                <th className="py-2 px-4 border-b text-left text-gray-800">Date</th>
-                <th className="py-2 px-4 border-b text-left text-gray-800">Marked By</th>
-                <th className="py-2 px-4 border-b text-left text-gray-800">Status</th>
+              <tr className="bg-gray-50">
+                <th className="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Column Name</th>
+                <th className="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                <th className="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Value</th>
               </tr>
             </thead>
             <tbody>
-              {attendanceHistory.map((record) => {
-                // For students, show only their status. For teachers, show summary or link to details.
-                // Simplified: Showing raw records for now.
-                const myRecord = user?.role === 'student' 
-                  ? record.records.find(r => r.student._id === user._id)
-                  : null;
-
-                return (
-                  <tr key={record._id}>
-                    <td className="py-2 px-4 border-b text-gray-700">
-                      {new Date(record.date).toLocaleDateString()}
-                    </td>
-                    <td className="py-2 px-4 border-b text-gray-700">{record.markedBy?.name}</td>
-                    <td className="py-2 px-4 border-b text-gray-700">
-                      {user?.role === 'student' ? (
-                        <span className={`font-bold ${
-                          myRecord?.status === 'Present' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {myRecord?.status || 'N/A'}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">{record.records.length} records</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {classData.columns?.length > 0 ? (
+                classData.columns.map((column) => {
+                  const record = matrixData.find(r => r.columnId === column._id);
+                  const val = record ? record.value : '-';
+                  
+                  return (
+                    <tr key={column._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 border-b text-gray-800 font-medium">{column.name}</td>
+                      <td className="py-3 px-4 border-b text-gray-600 capitalize">{column.type}</td>
+                      <td className="py-3 px-4 border-b text-gray-800">
+                        {column.type === 'attendance' ? (
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            val === 'Present' ? 'bg-green-100 text-green-800' :
+                            val === 'Absent' ? 'bg-red-100 text-red-800' :
+                            val === 'Late' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {val}
+                          </span>
+                        ) : (
+                          <span className="font-semibold">{val}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="3" className="py-4 text-center text-gray-500">No records found.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

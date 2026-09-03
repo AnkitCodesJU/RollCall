@@ -18,7 +18,7 @@ Since this is a monorepo (one repository with multiple projects), you will creat
 1.  **Log in to Vercel** and click **"Add New Project"**.
 2.  **Import your Repository**: Select the `RollCall` repository.
 3.  **Configure Project**:
-    -   **Project Name**: e.g., `rollcall-backend`
+    -   **Project Name**: e.g., `RollCall-backend`
     -   **Framework Preset**: Select `Other` (or leave default).
     -   **Root Directory**: Click "Edit" and select `backend`.
 4.  **Environment Variables**:
@@ -26,7 +26,7 @@ Since this is a monorepo (one repository with multiple projects), you will creat
     -   Add `JWT_SECRET`: A secret key for authentication.
 5.  **Deploy**: Click **Deploy**.
 
-Once deployed, copy the **URL** (domain) assigned to your backend project (e.g., `https://rollcall-backend.vercel.app`). You will need this for the frontend Config.
+Once deployed, copy the **URL** (domain) assigned to your backend project (e.g., `https://RollCall-backend.vercel.app`). You will need this for the frontend Config.
 
 ---
 
@@ -35,12 +35,12 @@ Once deployed, copy the **URL** (domain) assigned to your backend project (e.g.,
 1.  **Add New Project** in Vercel again.
 2.  **Import the SAME Repository**: Select `RollCall` again.
 3.  **Configure Project**:
-    -   **Project Name**: e.g., `rollcall-frontend`
+    -   **Project Name**: e.g., `RollCall-frontend`
     -   **Framework Preset**: `Next.js` (should be auto-detected).
     -   **Root Directory**: Click "Edit" and select `frontend`.
 4.  **Environment Variables**:
     -   Add `NEXT_PUBLIC_API_URL`: Paste your backend URL from Part 1, followed by `/api`.
-        -   Example: `https://rollcall-backend.vercel.app/api`
+        -   Example: `https://RollCall-backend.vercel.app/api`
 5.  **Deploy**: Click **Deploy**.
 
 ---

@@ -1,29 +1,14 @@
 
 "use client";
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/utils/AuthContext';
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    // Check localStorage on mount/update
-    const checkUser = () => {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      } else {
-        setUser(null);
-      }
-    };
-    
-    checkUser();
-    window.addEventListener('storage', checkUser);
-    window.addEventListener('auth-change', checkUser);
-
     // Dark Mode Check
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setDarkMode(true);
@@ -32,11 +17,6 @@ export default function Navbar() {
       setDarkMode(false);
       document.documentElement.classList.remove('dark');
     }
-
-    return () => {
-      window.removeEventListener('storage', checkUser);
-      window.removeEventListener('auth-change', checkUser);
-    };
   }, []);
 
   const toggleTheme = () => {
@@ -52,10 +32,7 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    window.dispatchEvent(new Event('auth-change'));
-    router.push('/login');
+    logout();
   };
 
   return (

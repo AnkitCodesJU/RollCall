@@ -1,15 +1,23 @@
 "use client";
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import API from '@/utils/api';
 import Link from 'next/link';
+import { useAuth } from '@/utils/AuthContext';
 
 export default function NotificationsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all'); // all, unread
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (!authLoading && !user) {
+      router.push('/login');
+    } else if (user) {
+      fetchNotifications();
+    }
+  }, [authLoading, user]);
 
   const fetchNotifications = async () => {
     try {

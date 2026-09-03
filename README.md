@@ -39,7 +39,26 @@ This application is packed with features designed for both Teachers and Students
 -   **Dark/Light Mode**: Fully responsive theme switching.
 -   **Responsive Design**: Works seamlessly on desktop, tablet, and mobile.
 
-## 🛠️ Tech Stack
+## 📸 Screenshots & Features
+
+<details>
+  <summary><b>View Gallery</b> (Click to expand)</summary>
+  <br>
+  
+  **Teacher Dashboard (Dark Mode)**
+  <img src="./frontend/public/images/dark_theme_dashboard.png" alt="Dashboard" width="800">
+  
+  **Dynamic Class Matrix**
+  <img src="./frontend/public/images/class_UI.png" alt="Class UI" width="800">
+  
+  **Student Analytics View**
+  <img src="./frontend/public/images/student_side_record.png" alt="Student View" width="800">
+  
+  **Real-Time Notifications**
+  <img src="./frontend/public/images/notification_system.png" alt="Notifications" width="800">
+</details>
+
+## 🛠️ Core Tech Stack
 
 ### Frontend
 ![Next.js](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)

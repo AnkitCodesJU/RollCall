@@ -13,18 +13,20 @@ const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+      // Ensure this is an access token, not a refresh token
+      if (decoded.type !== 'access') {
+        return res.status(401).json({ message: 'Not authorized, invalid token type' });
+      }
+
       req.user = await User.findById(decoded.id).select('-password');
 
-      next();
+      return next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
-  }
+  return res.status(401).json({ message: 'Not authorized, no token' });
 };
 
 const admin = (req, res, next) => {

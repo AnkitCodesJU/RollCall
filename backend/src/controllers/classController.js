@@ -224,7 +224,14 @@ const declineRequest = async (req, res) => {
 // @route   GET /api/classes/:id/matrix
 // @access  Private
 const getMatrix = async (req, res) => {
-  const records = await ClassRecord.find({ classId: req.params.id });
+  let query = { classId: req.params.id };
+  
+  // Security Check: If user is a student, ONLY return their own records
+  if (req.user.role === 'student') {
+    query.studentId = req.user._id;
+  }
+
+  const records = await ClassRecord.find(query);
   res.json(records);
 };
 
