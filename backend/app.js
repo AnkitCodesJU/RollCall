@@ -14,7 +14,10 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Dynamically allow the requesting origin to prevent Vercel CORS issues
+    callback(null, origin || true);
+  },
   credentials: true,
 }));
 app.use(express.json());
