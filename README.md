@@ -1,4 +1,4 @@
-# RollCall - Comprehensive Attendance Management System
+# RollCall - Dynamic Attendance Management System
 
 RollCall is a modern, full-stack attendance management application designed to streamline the process of tracking attendance, managing classes, and analyzing student performance. It features a premium, user-centric interface and robust backend architecture.
 
