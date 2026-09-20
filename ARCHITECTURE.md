@@ -6,22 +6,24 @@ This document provides a high-level architecture view of the RollCall applicatio
 
 ```mermaid
 flowchart LR
-    User[Student / Teacher / Admin\nBrowser]
+    User["Student / Teacher / Admin<br/>Browser"]
 
-    subgraph Frontend[Frontend - Next.js]
-        UI[Next.js UI\nPages, Components, Forms]
-        State[Client State + API Calls\nAxios / Fetch]
+    subgraph Frontend["Frontend - Next.js"]
+        UI["Next.js UI<br/>Pages, Components, Forms"]
+        State["Client State + API Calls<br/>Axios / Fetch"]
     end
 
-    subgraph Backend[Backend - Node.js + Express]
-        API[REST API Routes]
-        Auth[Auth Middleware + JWT Validation]
-        Ctrl[Controllers]\n    end
+    subgraph Backend["Backend - Node.js + Express"]
+        API["REST API Routes"]
+        Auth["Auth Middleware + JWT Validation"]
+        Ctrl["Controllers"]
+    end
 
-    subgraph Services[Business Logic]
-        Users[User & Profile APIs]
-        Classes[Class Management\nJoin Requests\nMatrix Updates]
-        Notify[Notifications\nAnnouncements]\n    end
+    subgraph Services["Business Logic"]
+        Users["User & Profile APIs"]
+        Classes["Class Management<br/>Join Requests<br/>Matrix Updates"]
+        Notify["Notifications<br/>Announcements"]
+    end
 
     DB[(MongoDB Atlas / Local MongoDB)]
     JWT[(JWT Tokens)]
@@ -147,7 +149,7 @@ flowchart TB
     Next[Next.js Frontend]
     API[Express REST API]
     Auth[JWT Auth Middleware]
-    Controllers[Controllers\nUser / Class / Notification]
+    Controllers["Controllers<br/>User / Class / Notification"]
     Mongo[(MongoDB)]
     Users[Users]
     Classes[Classes + Attendance Matrix]
